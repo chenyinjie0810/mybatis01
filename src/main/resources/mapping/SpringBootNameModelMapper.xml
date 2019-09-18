@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.chenyj.mybatis.mapper.SpringBootNameModelMapper" >
+  <resultMap id="BaseResultMap" type="com.chenyj.mybatis.model.SpringBootNameModel" >
+    <result column="id" property="id" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="emil" property="emil" jdbcType="VARCHAR" />
+    <result column="depa_id" property="depaId"/>
+    <result column="d_name" property="depa.name"/>
+    <result column="d_id" property="depa.id"/>
+  </resultMap>
+
+  <resultMap id="nameMap" type="com.chenyj.mybatis.model.SpringBootNameModel" >
+    <result column="id" property="id" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="emil" property="emil" jdbcType="VARCHAR" />
+    <result column="depa_id" property="depaId"/>
+  </resultMap>
+
+    <resultMap id="nameModel" type="com.chenyj.mybatis.model.SpringBootNameModel">
+        <result column="id" property="id" jdbcType="INTEGER" />
+        <result column="name" property="name" jdbcType="VARCHAR" />
+        <result column="emil" property="emil" jdbcType="VARCHAR" />
+        <result column="depa_id" property="depaId" jdbcType="INTEGER"/>
+
+        <discriminator javaType="integer" column="sex">
+          <case value="1" resultType="com.chenyj.mybatis.model.SpringBootNameModel">
+            <association property="depa" select="com.chenyj.mybatis.mapper.SpringBootDepaMapper.findDepaById"
+                         column="depa_id">
+            </association>
+          </case>
+          <case value="2" resultType="com.chenyj.mybatis.model.SpringBootNameModel">
+            <result column="id" property="id" jdbcType="INTEGER" />
+            <result column="name" property="name" jdbcType="VARCHAR" />
+            <result column="emil" property="emil" jdbcType="VARCHAR" />
+            <result column="sex" property="depaId" jdbcType="INTEGER"/>
+          </case>
+        </discriminator>
+    </resultMap>
+
+
+
+    <sql id="content">
+        t.id,t.name,t.emil from t_spring_boot_name t
+    </sql>
+      <insert id="insert" parameterType="com.chenyj.mybatis.model.SpringBootNameModel" >
+        insert into t_spring_boot_name (id, name, emil
+          )
+        values (#{id,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{emil,jdbcType=VARCHAR}
+          )
+      </insert>
+
+  <insert id="insertSelective" parameterType="com.chenyj.mybatis.model.SpringBootNameModel" >
+    insert into t_spring_boot_name
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="name != null" >
+        name,
+      </if>
+      <if test="emil != null" >
+        emil,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="emil != null" >
+        #{emil,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="getNameInfoById"  resultType="com.chenyj.mybatis.model.SpringBootNameModel">
+        select * from t_spring_boot_name t where t.id=#{id}
+   </select>
+  
+  <select id="getNameSByInfro" resultType="map">
+     select  t.id,t.name,t.emil,t.depa_id,d.name as d_name,d.id as d_id from t_spring_boot_name t
+    left join t_depa d on t.depa_id=d.id
+    where t.name like CONCAT('%',#{name },'%');
+  </select>
+
+  <!--<select id="getNameListByName" resultMap="BaseResultMap">
+    select  <include refid="content"/> where t.name like CONCAT('%',#{name },'%');
+  </select>-->
+
+  <select id="getNameListByName" resultMap="BaseResultMap">
+    select  t.id,t.name,t.emil,t.depa_id,d.name as d_name,d.id as d_id from t_spring_boot_name t
+    left join t_depa d on t.depa_id=d.id
+    where t.name like CONCAT('%',#{name },'%');
+  </select>
+    <select id="findNameById" resultMap="nameModel">
+        select * from t_spring_boot_name t where t.id=#{id}
+    </select>
+
+    <select id="findNameByDepaId" resultMap="BaseResultMap">
+       select  t.id,t.name,t.emil,t.depa_id,d.name as d_name,d.id as d_id from t_spring_boot_name t
+          left join t_depa d on t.depa_id=d.id where t.depa_id=#{id}
+    </select>
+
+    <select id="findNameByInfo" parameterType="com.chenyj.mybatis.model.SpringBootNameModel" resultMap="BaseResultMap">
+        select  t.id,t.name,t.emil,t.depa_id,d.name as d_name,d.id as d_id from t_spring_boot_name t
+          left join t_depa d on t.depa_id=d.id
+          <where>
+              <if test="id !=null and id !=''">
+                    t.id=#{id}
+              </if>
+              <bind name="_name" value="'%'+name+'%'"/>
+              <if test="name !=null and name !=''">
+                   and  t.name like #{_name}
+              </if>
+              <if test="emil !=null and emil !=''">
+                    and t.emil like CONCAT('%',#{emil},'%')
+              </if>
+          </where>
+
+        <!--<where>
+            <choose>
+                <when test="id !=null and id !=''">
+                    t.id =#{id}
+                </when>
+                <when test="name !=null and name!=''">
+                    t.name like CONCAT('%',#{name},'%')
+                </when>
+                <otherwise>
+                    t.emil like CONCAT('%',#{emil},'%')
+                </otherwise>
+            </choose>
+        </where>-->
+    </select>
+
+    <select id="findNameByListIDs" parameterType="list" resultMap="BaseResultMap">
+         select  t.id,t.name,t.emil,t.depa_id,d.name as d_name,d.id as d_id from t_spring_boot_name t
+                  left join t_depa d on t.depa_id=d.id
+        <where>
+            <if test="ids !=null">
+             t.id in
+                <foreach collection="ids" item="id" separator="," open="(" close=")">
+                #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+</mapper>
